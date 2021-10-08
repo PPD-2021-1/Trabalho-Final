@@ -55,8 +55,6 @@ while(1):
         if(newCommand == False):
             
             #remover nó do anel (qual nó?)
-            print(self.nodes)
-            handlerRemovedNodeInSys()
 
             nNodes = nNodes - 1
 
