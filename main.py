@@ -8,22 +8,30 @@ import math
 import random
 
 channelPrefix = "trabalhopdd1110002203"
-mqttBroker = "mqtt.eclipseprojects.io" 
+mqttBroker = "mqtt.eclipseprojects.io"
+dhts = []
 
 # Inicializa nó
 def createNode():
     dht = DHT(mqttBroker, channelPrefix)
+    print(f"#############addn {dht.nodeID}")
+    time.sleep(1)
+    dhts.append(dht)
+    print(dhts)
 
 # Deleta nó
 def deleteNode():
-    pass
+    # leaveNode = random.sample(dhts, 1)
+
+    print(dhts)
+    # print(leaveNode.nodeID)
 
 def getRandomTrueOrFalse():
-    randNumber = random.randint(1,10)
+    randNumber = random.randint(1,3)
 
     if(randNumber == 1):
         return True
-    if(randNumber == 10):
+    if(randNumber == 3):
         return False
     else:
         pass
@@ -55,8 +63,9 @@ while(1):
         if(newCommand == False):
             
             #remover nó do anel (qual nó?)
+            deleteNode()
 
-            nNodes = nNodes - 1
+            # nNodes = nNodes - 1
 
         time.sleep(1)
 

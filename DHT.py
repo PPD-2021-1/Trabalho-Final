@@ -67,7 +67,10 @@ class DHT:
                 data['id'] = message['id']
                 data['type'] = 'server_response'
                 if message['type'] == 'put':
+                    self.storageCount = self.storageCount + 1
                     self.table[message['key']] = message['value']
+                    if(self.storageCount > self.maxStorage):
+                        self.client.publish(self.channelPrefix + 'leave', json.dumps(data))
                     data['status'] = 201
                 elif message['type'] == 'get':
                     if message['key'] in self.table:
@@ -116,12 +119,14 @@ class DHT:
             "type": "leave",
             "id": self.nodeID
         }
-        self.client.publish(self.channelPrefix + 'control', json.dumps(joinMessage))
+        self.client.publish(self.channelPrefix + 'control', json.dumps(leaveMessage))
 
     def __init__(self, brokenURL, channelPrefix):
         # Nós do anel
         self.nodes = []
         self.table = {}
+        self.maxStorage = random.randint(1, 3)
+        self.storageCount = 0
 
         if(channelPrefix and len(channelPrefix)):
             self.channelPrefix = channelPrefix + '/'
