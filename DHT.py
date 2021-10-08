@@ -1,8 +1,10 @@
+import sys
 import paho.mqtt.client as mqtt
 import random
 import math
 import json
-from io import StringIO
+import time
+import threading
 
 class DHT:
 
@@ -51,6 +53,14 @@ class DHT:
         except:
             pass
 
+    def leaveSelf(self):
+        leaveMessage = {
+            "type": "leave",
+            "id": self.nodeID
+        }
+        self.client.publish(self.channelPrefix + 'control', json.dumps(leaveMessage))
+        sys.exit()
+
     def checkIfKeyInMyRange(self, key):
         if self.initValue < self.finalValue:
             return self.initValue < key and key <= self.finalValue
@@ -67,10 +77,7 @@ class DHT:
                 data['id'] = message['id']
                 data['type'] = 'server_response'
                 if message['type'] == 'put':
-                    self.storageCount = self.storageCount + 1
                     self.table[message['key']] = message['value']
-                    if(self.storageCount > self.maxStorage):
-                        self.client.publish(self.channelPrefix + 'leave', json.dumps(data))
                     data['status'] = 201
                 elif message['type'] == 'get':
                     if message['key'] in self.table:
@@ -121,12 +128,20 @@ class DHT:
         }
         self.client.publish(self.channelPrefix + 'control', json.dumps(leaveMessage))
 
+
+    # sai do no aleatoriamente
+    def randomLeave(self):
+        while True:
+            time.sleep(2)
+            num = int(random.uniform(1, 10))
+            if num == 1:
+                self.leaveSelf()
+
+
     def __init__(self, brokenURL, channelPrefix):
         # Nós do anel
         self.nodes = []
         self.table = {}
-        self.maxStorage = random.randint(1, 3)
-        self.storageCount = 0
 
         if(channelPrefix and len(channelPrefix)):
             self.channelPrefix = channelPrefix + '/'
@@ -136,6 +151,8 @@ class DHT:
         total = (2**32) - 1
         self.nodeID = math.floor(random.uniform(0, total))
         print("init node_" + str(self.nodeID))
+
+        threading.Thread(target=self.randomLeave).start()
 
         self.initValue = 0
         self.finalValue = total

@@ -1,73 +1,26 @@
 import threading
 from DHT import *
 import paho.mqtt.client as mqtt 
-from random import randrange, uniform
+from random import uniform
 import time
 import json
 import math
 import random
+import sys
 
 channelPrefix = "trabalhopdd1110002203"
 mqttBroker = "mqtt.eclipseprojects.io"
-dhts = []
 
 # Inicializa nó
 def createNode():
     dht = DHT(mqttBroker, channelPrefix)
     print(f"#############addn {dht.nodeID}")
-    time.sleep(1)
-    dhts.append(dht)
-    print(dhts)
 
-# Deleta nó
-def deleteNode():
-    # leaveNode = random.sample(dhts, 1)
-
-    print(dhts)
-    # print(leaveNode.nodeID)
-
-def getRandomTrueOrFalse():
-    randNumber = random.randint(1,3)
-
-    if(randNumber == 1):
-        return True
-    if(randNumber == 3):
-        return False
-    else:
-        pass
-
-nNodes = 0
-
-while(1):
-    
-    if(nNodes == 0):
-
-        #Inicializa uma nova thread e cria um nó inicial
+# cria dht inicial
+def initDHT(nodeCount):
+    for _ in range(nodeCount):
         t = threading.Thread(target=createNode)
         t.start()
-        nNodes = nNodes + 1
-
-    if(nNodes > 0):
-        newCommand = getRandomTrueOrFalse()
-        print(newCommand)
-        print(nNodes)
-
-        if(newCommand == True):
-
-            #Adiciona novo nó ao anel
-            t = threading.Thread(target=createNode)
-            t.start()
-
-            nNodes = nNodes + 1
-
-        if(newCommand == False):
-            
-            #remover nó do anel (qual nó?)
-            deleteNode()
-
-            # nNodes = nNodes - 1
-
-        time.sleep(1)
 
 def on_message(client, userdata, message):
     try:
@@ -76,6 +29,26 @@ def on_message(client, userdata, message):
             print("CLIENT: Message recebida: " + str(message.payload))
     except:
         pass
+
+
+def randomNodeGenerator():
+    while True:
+        num = int(random.uniform(1, 10))
+        if (num == 1):
+            t = threading.Thread(target=createNode)
+            t.start()
+        time.sleep(2)
+
+#inicializa DHT
+nodesCount = 8
+if (len(sys.argv) > 1):
+    print(sys.argv[1])
+    nodesCount = int(float(sys.argv[1]))
+
+
+initDHT(nodesCount)
+threading.Thread(target=randomNodeGenerator).start()
+
 
 #inicializa um cliente
 client = mqtt.Client("trabalhopdd1110002203" + str(uniform(0, 10000000)))
