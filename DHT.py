@@ -24,7 +24,7 @@ class DHT:
                 minorId = self.nodes[len(self.nodes) - 1]
         self.initValue = minorId
         self.finalValue = self.nodeID
-        print("node_" + str(self.nodeID) + " NEW RANGE Ant/Suc:(" + str(self.initValue) + "|" + str(self.finalValue) + ")")
+        #print("node_" + str(self.nodeID) + " NEW RANGE Ant/Suc:(" + str(self.initValue) + "|" + str(self.finalValue) + ")")
         return
 
     def handlerNewNodeInSys(self, nodeId):
@@ -39,16 +39,37 @@ class DHT:
             self.nodes.sort()
             self.updateBundaries()
 
+    # Trata as mensagens de alive
+    def handlerIdReport(self, nodeID):
+        if nodeID == self.nodeID:
+            return
+        for node in self.nodes:
+            if nodeID == node:
+                return
+        self.handlerNewNodeInSys(nodeID)
+
+    # Informa meu proprio ID na rede pro no entrante conhecer os outros nós
+    def reportMyId(self):
+        message = {
+            "type": "id_report",
+            'id': self.nodeID
+        }
+        self.client.publish(self.channelPrefix + 'control', json.dumps(message))
+
     # Trata a mensagem do canal de controle
     def handlerControlMessage(self, message):
         try:
             if message['type'] == 'join':
-                print("node_" + str(self.nodeID) + " receive join")
+                #print("node_" + str(self.nodeID) + " receive join")
                 self.handlerNewNodeInSys(message['id'])
+                self.reportMyId()
                 return
             if message['type'] == 'leave':
-                print("node_" + str(self.nodeID) + " receive leave")
+                #print("node_" + str(self.nodeID) + " receive leave")
                 self.handlerRemovedNodeInSys(message['id'])
+                return
+            if message['type'] == 'id_report':
+                self.handlerIdReport(message['id'])
                 return
         except:
             pass
@@ -59,6 +80,7 @@ class DHT:
             "id": self.nodeID
         }
         self.client.publish(self.channelPrefix + 'control', json.dumps(leaveMessage))
+        time.sleep(10)
         sys.exit()
 
     def checkIfKeyInMyRange(self, key):
@@ -71,7 +93,7 @@ class DHT:
     def handlerGetAndPutMessage(self, message):
         try:
             if 'key' in message and self.checkIfKeyInMyRange(message['key']):
-                print("node_" + str(self.nodeID) + " (from:" + str(self.initValue) + "|to:" + str(self.finalValue) + ") receive message")
+                #print("node_" + str(self.nodeID) + " (from:" + str(self.initValue) + "|to:" + str(self.finalValue) + ") receive message")
                 data = {}
                 # Repete o id para o usuário que enviou saber que a mensagem é dele
                 data['id'] = message['id']
@@ -107,7 +129,7 @@ class DHT:
         return
 
     def on_connect(self, client, userdata, flags, rc):
-        print("node_" + str(self.nodeID) + " connected")
+        #print("node_" + str(self.nodeID) + " connected")
         self.client.subscribe(self.channelPrefix + 'control')
         self.client.subscribe(self.channelPrefix + 'hash')
         # Mensagem de join anuncia a entrada de um novo nó no anel, demais nós iram atualizar o seu intervalo quando receber essa mensagem
@@ -118,7 +140,7 @@ class DHT:
         self.client.publish(self.channelPrefix + 'control', json.dumps(joinMessage))
 
     def on_disconnect(self, client, userdata, flags, rc):
-        print("node_" + str(self.nodeID) + "disconnected")
+        #print("node_" + str(self.nodeID) + "disconnected")
         self.client.disconnect(self.channelPrefix + 'control')
         self.client.disconnect(self.channelPrefix + 'hash')
         #Mensagem de leave anuncia a saida de um nó do anel. Demais nós iram atualizar o seu intervalo quando receber a mensagem
@@ -150,7 +172,7 @@ class DHT:
             
         total = (2**32) - 1
         self.nodeID = math.floor(random.uniform(0, total))
-        print("init node_" + str(self.nodeID))
+        #print("init node_" + str(self.nodeID))
 
         threading.Thread(target=self.randomLeave).start()
 

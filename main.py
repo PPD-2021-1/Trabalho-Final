@@ -40,7 +40,7 @@ def randomNodeGenerator():
         time.sleep(2)
 
 #inicializa DHT
-nodesCount = 8
+nodesCount = 1
 if (len(sys.argv) > 1):
     print(sys.argv[1])
     nodesCount = int(float(sys.argv[1]))
